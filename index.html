@@ -212,6 +212,7 @@
                 <input type="text" id="modelName" placeholder="e.g., microsoft/phi-3-mini-128k-instruct:free" value="microsoft/phi-3-mini-128k-instruct:free">
             </div>
             <button class="btn" onclick="initializeChat()">Begin the Session</button>
+            <button class="btn" onclick="testMicrophone()" style="background: linear-gradient(45deg, #28a745, #20c997);">Test Microphone</button>
         </div>
 
         <!-- Voice Interface -->
@@ -303,13 +304,14 @@
 
             // Check if browser supports speech recognition
             if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-                showError('Speech recognition not supported in this browser');
+                showError('Speech recognition not supported in this browser. Please use Chrome or Edge.');
                 return;
             }
 
             try {
-                // Test API connection
-                await callAI("Hello");
+                // Request microphone permission first
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                stream.getTracks().forEach(track => track.stop()); // Stop the stream, we just needed permission
                 
                 document.getElementById('setupForm').style.display = 'none';
                 document.getElementById('voiceInterface').style.display = 'block';
@@ -320,10 +322,14 @@
                 isSessionActive = true;
                 
                 // AI greeting
-                speakText("Hello! I'm your AI assistant. How can I help you today?");
+                speakText("Hello! I'm your AI assistant. I can hear you now. How can I help you today?");
                 
             } catch (error) {
-                showError('Failed to connect to AI. Please check your API key and model name.');
+                if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
+                    showError('Microphone permission denied. Please allow microphone access and try again.');
+                } else {
+                    showError('Error accessing microphone: ' + error.message);
+                }
             }
         }
 
@@ -332,16 +338,20 @@
             const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
             recognition = new SpeechRecognition();
             
-            recognition.continuous = true;
+            recognition.continuous = false; // Changed to false for better reliability
             recognition.interimResults = false;
             recognition.lang = 'en-US';
+            recognition.maxAlternatives = 1;
 
             recognition.onstart = () => {
+                console.log('Speech recognition started');
                 setListeningMode();
             };
 
             recognition.onresult = (event) => {
-                const transcript = event.results[event.results.length - 1][0].transcript.trim();
+                console.log('Speech recognition result:', event.results);
+                const transcript = event.results[0][0].transcript.trim();
+                console.log('Transcript:', transcript);
                 if (transcript) {
                     addToHistory('user', transcript);
                     handleUserInput(transcript);
@@ -350,16 +360,27 @@
 
             recognition.onerror = (event) => {
                 console.error('Speech recognition error:', event.error);
-                if (!isPaused && isSessionActive) {
-                    setTimeout(() => startListening(), 1000);
+                showError(`Speech error: ${event.error}. Click to try manual input.`);
+                
+                // Add manual input fallback
+                const userInput = prompt("I couldn't hear you. Please type your message:");
+                if (userInput && userInput.trim()) {
+                    addToHistory('user', userInput);
+                    handleUserInput(userInput);
+                } else if (!isPaused && isSessionActive) {
+                    setTimeout(() => startListening(), 2000);
                 }
             };
 
             recognition.onend = () => {
+                console.log('Speech recognition ended');
                 if (!isPaused && isSessionActive && !isAISpeaking) {
-                    setTimeout(() => startListening(), 500);
+                    setTimeout(() => startListening(), 1000);
                 }
             };
+
+            // Start listening immediately after setup
+            setTimeout(() => startListening(), 1000);
         }
 
         // Set visual mode to listening
@@ -408,12 +429,20 @@
 
         // Start listening
         function startListening() {
-            if (isSessionActive && !isPaused && !isAISpeaking) {
-                try {
-                    recognition.start();
-                } catch (error) {
-                    console.error('Error starting recognition:', error);
+            if (!isSessionActive || isPaused || isAISpeaking) return;
+            
+            try {
+                // Stop any existing recognition first
+                if (recognition && recognition.abort) {
+                    recognition.abort();
                 }
+                
+                console.log('Starting speech recognition...');
+                recognition.start();
+                
+            } catch (error) {
+                console.error('Error starting recognition:', error);
+                showError('Could not start listening. Please refresh and try again.');
             }
         }
 
@@ -532,6 +561,22 @@
             document.getElementById('modelName').value = 'microsoft/phi-3-mini-128k-instruct:free';
             document.getElementById('chatHistory').innerHTML = '';
             conversationHistory = [];
+        }
+
+        // Test microphone function
+        async function testMicrophone() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                showError(''); // Clear any previous errors
+                alert('Microphone is working! You can now begin the session.');
+                stream.getTracks().forEach(track => track.stop());
+            } catch (error) {
+                if (error.name === 'NotAllowedError') {
+                    showError('Microphone permission denied. Please click the microphone icon in your browser address bar and allow access.');
+                } else {
+                    showError('Microphone not accessible: ' + error.message);
+                }
+            }
         }
 
         // Initialize on page load
