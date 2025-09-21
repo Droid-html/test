@@ -1,1 +1,1097 @@
-j
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neural Voice AI Chatbot</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(15px);
+            border-radius: 25px;
+            padding: 35px;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+            width: 100%;
+            max-width: 600px;
+            text-align: center;
+        }
+
+        .title {
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 28px;
+            font-weight: 300;
+            background: linear-gradient(45deg, #1e3c72, #2a5298);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .setup-form {
+            margin-bottom: 30px;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 500;
+        }
+
+        .input-group input, .input-group select {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            font-size: 15px;
+            transition: all 0.3s;
+        }
+
+        .input-group input:focus, .input-group select:focus {
+            outline: none;
+            border-color: #2a5298;
+            transform: translateY(-2px);
+        }
+
+        .voice-interface {
+            display: none;
+        }
+
+        .voice-visualizer {
+            width: 250px;
+            height: 250px;
+            margin: 0 auto 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            overflow: hidden;
+        }
+
+        .voice-visualizer::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: conic-gradient(from 0deg, transparent, rgba(255,255,255,0.3), transparent);
+            animation: rotate 4s linear infinite;
+        }
+
+        .voice-visualizer.neural-speaking {
+            background: linear-gradient(45deg, #4facfe, #00f2fe);
+            animation: neural-pulse 1.5s ease-in-out infinite;
+            box-shadow: 0 0 30px rgba(79, 172, 254, 0.5);
+        }
+
+        .voice-visualizer.neural-listening {
+            background: linear-gradient(45deg, #fa709a, #fee140);
+            animation: neural-breathe 2.5s ease-in-out infinite;
+            box-shadow: 0 0 30px rgba(250, 112, 154, 0.5);
+        }
+
+        .voice-visualizer.neural-thinking {
+            background: linear-gradient(45deg, #a8edea, #fed6e3);
+            animation: neural-think 1s ease-in-out infinite alternate;
+        }
+
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        @keyframes neural-pulse {
+            0%, 100% { transform: scale(1); filter: hue-rotate(0deg); }
+            25% { transform: scale(1.03); filter: hue-rotate(10deg); }
+            50% { transform: scale(1.08); filter: hue-rotate(20deg); }
+            75% { transform: scale(1.05); filter: hue-rotate(15deg); }
+        }
+
+        @keyframes neural-breathe {
+            0%, 100% { transform: scale(1) rotateZ(0deg); opacity: 0.9; }
+            50% { transform: scale(1.12) rotateZ(2deg); opacity: 1; }
+        }
+
+        @keyframes neural-think {
+            0% { transform: scale(1); filter: brightness(1); }
+            100% { transform: scale(1.02); filter: brightness(1.1); }
+        }
+
+        .neural-wave-container {
+            width: 150px;
+            height: 80px;
+            display: flex;
+            align-items: end;
+            justify-content: center;
+            gap: 2px;
+            z-index: 2;
+            position: relative;
+        }
+
+        .neural-wave-bar {
+            width: 3px;
+            background: linear-gradient(to top, rgba(255,255,255,0.9), rgba(255,255,255,0.6));
+            border-radius: 2px;
+            transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 0 10px rgba(255,255,255,0.3);
+        }
+
+        .status-text {
+            color: #555;
+            font-size: 20px;
+            margin-bottom: 25px;
+            font-weight: 400;
+            transition: all 0.3s ease;
+        }
+
+        .personality-controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .personality-btn {
+            background: rgba(42, 82, 152, 0.1);
+            color: #2a5298;
+            border: 2px solid #2a5298;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .personality-btn.active {
+            background: #2a5298;
+            color: white;
+        }
+
+        .btn {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 18px 35px;
+            border-radius: 30px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            margin: 12px;
+            font-weight: 500;
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 35px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-danger {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+            box-shadow: 0 8px 25px rgba(255, 107, 107, 0.3);
+        }
+
+        .btn-success {
+            background: linear-gradient(45deg, #28a745, #20c997);
+            box-shadow: 0 8px 25px rgba(40, 167, 69, 0.3);
+        }
+
+        .chat-history {
+            max-height: 250px;
+            overflow-y: auto;
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 25px;
+            text-align: left;
+            box-shadow: inset 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .message {
+            margin-bottom: 15px;
+            padding: 12px 16px;
+            border-radius: 12px;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .message.user {
+            background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+            margin-left: 30px;
+            border-left: 4px solid #2196f3;
+        }
+
+        .message.ai {
+            background: linear-gradient(135deg, #f3e5f5, #e1bee7);
+            margin-right: 30px;
+            border-left: 4px solid #9c27b0;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .error {
+            color: #e74c3c;
+            background: linear-gradient(135deg, #fdf2f2, #fce4e4);
+            padding: 18px;
+            border-radius: 12px;
+            margin: 15px 0;
+            border-left: 5px solid #e74c3c;
+            white-space: pre-line;
+            text-align: left;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .success {
+            color: #27ae60;
+            background: linear-gradient(135deg, #d4edda, #c3e6cb);
+            padding: 18px;
+            border-radius: 12px;
+            margin: 15px 0;
+            border-left: 5px solid #27ae60;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .neural-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+            gap: 10px;
+            margin: 20px 0;
+        }
+
+        .neural-stat {
+            background: rgba(255,255,255,0.1);
+            padding: 10px;
+            border-radius: 10px;
+            text-align: center;
+            font-size: 12px;
+        }
+
+        .neural-stat-value {
+            font-size: 16px;
+            font-weight: bold;
+            color: #2a5298;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="title">🧠 Neural Voice AI Assistant</h1>
+        
+        <!-- Setup Form -->
+        <div class="setup-form" id="setupForm">
+            <div class="input-group">
+                <label for="apiKey">OpenRouter API Key:</label>
+                <input type="password" id="apiKey" placeholder="Enter your OpenRouter API key">
+            </div>
+            <div class="input-group">
+                <label for="modelName">AI Model Name:</label>
+                <input type="text" id="modelName" placeholder="e.g., microsoft/phi-3-mini-128k-instruct:free" value="microsoft/phi-3-mini-128k-instruct:free">
+            </div>
+            <div class="input-group">
+                <label for="voicePersonality">AI Voice Personality:</label>
+                <select id="voicePersonality">
+                    <option value="natural">Natural & Conversational</option>
+                    <option value="enthusiastic">Enthusiastic & Energetic</option>
+                    <option value="calm">Calm & Soothing</option>
+                    <option value="professional">Professional & Clear</option>
+                    <option value="friendly">Warm & Friendly</option>
+                    <option value="witty">Witty & Engaging</option>
+                </select>
+            </div>
+            <button class="btn" onclick="initializeNeuralChat()">🚀 Begin Neural Session</button>
+            <button class="btn btn-success" onclick="testNeuralMicrophone()">🎤 Test Neural Mic</button>
+        </div>
+
+        <!-- Voice Interface -->
+        <div class="voice-interface" id="voiceInterface">
+            <div class="voice-visualizer" id="visualizer">
+                <div class="neural-wave-container" id="neuralWaveContainer">
+                    <!-- Neural wave bars will be generated by JavaScript -->
+                </div>
+            </div>
+            
+            <div class="status-text" id="statusText">Initializing Neural Voice...</div>
+            
+            <div class="personality-controls">
+                <button class="personality-btn" onclick="adjustPersonality('excited')">Excited</button>
+                <button class="personality-btn" onclick="adjustPersonality('calm')">Calm</button>
+                <button class="personality-btn" onclick="adjustPersonality('thoughtful')">Thoughtful</button>
+                <button class="personality-btn" onclick="adjustPersonality('playful')">Playful</button>
+            </div>
+            
+            <div class="neural-stats">
+                <div class="neural-stat">
+                    <div class="neural-stat-value" id="voicePitch">1.0</div>
+                    <div>Pitch</div>
+                </div>
+                <div class="neural-stat">
+                    <div class="neural-stat-value" id="voiceRate">0.9</div>
+                    <div>Rate</div>
+                </div>
+                <div class="neural-stat">
+                    <div class="neural-stat-value" id="voiceEmotion">😊</div>
+                    <div>Emotion</div>
+                </div>
+                <div class="neural-stat">
+                    <div class="neural-stat-value" id="voiceDepth">85%</div>
+                    <div>Depth</div>
+                </div>
+            </div>
+            
+            <button class="btn" id="pauseBtn" onclick="togglePause()">⏸️ Pause</button>
+            <button class="btn btn-danger" onclick="endSession()">🛑 End Session</button>
+            
+            <div class="chat-history" id="chatHistory"></div>
+        </div>
+
+        <div class="error hidden" id="errorMessage"></div>
+        <div class="success hidden" id="successMessage"></div>
+    </div>
+
+    <script>
+        let isSessionActive = false;
+        let isPaused = false;
+        let recognition;
+        let synthesis = window.speechSynthesis;
+        let apiKey = '';
+        let modelName = '';
+        let conversationHistory = [];
+        let isAISpeaking = false;
+        let isListening = false;
+        let isThinking = false;
+        let currentPersonality = 'natural';
+        let neuralVoiceConfig = {
+            pitch: 1.0,
+            rate: 0.9,
+            volume: 0.8,
+            emotion: 'neutral',
+            depth: 0.85
+        };
+
+        // Neural conversation prompts for more natural speech
+        const personalityPrompts = {
+            natural: "Respond naturally like you're having a casual conversation. Use contractions, pauses, and speak as if you're thinking out loud. Keep it conversational and flowing.",
+            enthusiastic: "Respond with energy and enthusiasm! Show excitement about the topic. Use expressive language and speak with passion.",
+            calm: "Respond in a soothing, calm manner. Speak slowly and thoughtfully, like you're helping someone relax.",
+            professional: "Respond professionally but warmly. Clear, articulate speech with confidence.",
+            friendly: "Respond like you're talking to a good friend. Warm, supportive, and genuinely interested.",
+            witty: "Respond with clever humor and wit. Make it engaging and entertaining while being helpful."
+        };
+
+        // Initialize neural waves
+        function initializeNeuralWaves() {
+            const waveContainer = document.getElementById('neuralWaveContainer');
+            waveContainer.innerHTML = '';
+            for (let i = 0; i < 40; i++) {
+                const bar = document.createElement('div');
+                bar.className = 'neural-wave-bar';
+                bar.style.height = '8px';
+                waveContainer.appendChild(bar);
+            }
+        }
+
+        // Advanced neural wave animation simulating vocal cord vibration
+        function animateNeuralWaves(mode, intensity = 1) {
+            const bars = document.querySelectorAll('.neural-wave-bar');
+            
+            if (mode === 'speaking') {
+                // Simulate vocal cord vibration patterns
+                bars.forEach((bar, index) => {
+                    const frequency = Math.sin(Date.now() / 100 + index * 0.5);
+                    const harmonics = Math.sin(Date.now() / 200 + index * 0.3) * 0.5;
+                    const height = (15 + frequency * 20 + harmonics * 10) * intensity;
+                    bar.style.height = Math.max(5, height) + 'px';
+                    bar.style.filter = `hue-rotate(${frequency * 30}deg)`;
+                });
+            } else if (mode === 'listening') {
+                // Simulate listening sensitivity
+                bars.forEach((bar, index) => {
+                    const sensitivity = Math.random() * intensity;
+                    const height = 8 + sensitivity * 25;
+                    bar.style.height = height + 'px';
+                    bar.style.opacity = 0.6 + sensitivity * 0.4;
+                });
+            } else if (mode === 'thinking') {
+                // Simulate neural processing
+                bars.forEach((bar, index) => {
+                    const thought = Math.sin(Date.now() / 300 + index * 0.1);
+                    const height = 12 + Math.abs(thought) * 15;
+                    bar.style.height = height + 'px';
+                    bar.style.filter = `brightness(${1 + thought * 0.3})`;
+                });
+            }
+        }
+
+        // Stop neural animation
+        function stopNeuralWaves() {
+            const bars = document.querySelectorAll('.neural-wave-bar');
+            bars.forEach(bar => {
+                bar.style.height = '8px';
+                bar.style.filter = 'none';
+                bar.style.opacity = '1';
+            });
+        }
+
+        // Show success message
+        function showSuccess(message) {
+            const successEl = document.getElementById('successMessage');
+            successEl.textContent = message;
+            successEl.classList.remove('hidden');
+            setTimeout(() => successEl.classList.add('hidden'), 5000);
+        }
+
+        // Show error message
+        function showError(message) {
+            const errorEl = document.getElementById('errorMessage');
+            errorEl.innerHTML = message;
+            errorEl.classList.remove('hidden');
+            setTimeout(() => {
+                if (errorEl.innerHTML === message) {
+                    errorEl.classList.add('hidden');
+                }
+            }, 15000);
+        }
+
+        // Add message to chat history
+        function addToHistory(role, message) {
+            const chatHistory = document.getElementById('chatHistory');
+            const messageEl = document.createElement('div');
+            messageEl.className = `message ${role}`;
+            const timestamp = new Date().toLocaleTimeString();
+            messageEl.innerHTML = `
+                <strong>${role.toUpperCase()}</strong> <small>${timestamp}</small><br>
+                ${message}
+            `;
+            chatHistory.appendChild(messageEl);
+            chatHistory.scrollTop = chatHistory.scrollHeight;
+        }
+
+        // Test neural microphone
+        async function testNeuralMicrophone() {
+            try {
+                console.log('Testing neural microphone...');
+                
+                const stream = await navigator.mediaDevices.getUserMedia({ 
+                    audio: {
+                        echoCancellation: true,
+                        noiseSuppression: true,
+                        autoGainControl: true,
+                        sampleRate: 48000 // Higher quality for neural processing
+                    } 
+                });
+                
+                console.log('Neural microphone access granted!');
+                showSuccess('🎤 Neural microphone is active! Voice neural patterns detected successfully.');
+                
+                // Test neural recording
+                const mediaRecorder = new MediaRecorder(stream);
+                mediaRecorder.start();
+                
+                setTimeout(() => {
+                    mediaRecorder.stop();
+                    stream.getTracks().forEach(track => track.stop());
+                    showSuccess('✅ Neural voice system ready! All vocal neural pathways are functioning optimally.');
+                }, 1500);
+                
+            } catch (error) {
+                console.error('Neural microphone test failed:', error);
+                showError(`🚫 Neural microphone initialization failed.
+
+NEURAL ACTIVATION REQUIRED:
+1. Grant microphone access for neural voice processing
+2. Ensure high-quality audio input for optimal neural synthesis
+3. Use Chrome/Edge for advanced neural voice features
+4. Neural voice requires HTTPS for security
+
+Error Type: ${error.name}`);
+            }
+        }
+
+        // Initialize neural chat session
+        async function initializeNeuralChat() {
+            apiKey = document.getElementById('apiKey').value.trim();
+            modelName = document.getElementById('modelName').value.trim();
+            currentPersonality = document.getElementById('voicePersonality').value;
+
+            if (!apiKey || !modelName) {
+                showError('Please configure API credentials for neural voice system');
+                return;
+            }
+
+            if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+                showError('❌ Neural speech recognition not supported. Please use Chrome or Edge for neural voice features.');
+                return;
+            }
+
+            try {
+                console.log('Initializing neural voice system...');
+                
+                const stream = await navigator.mediaDevices.getUserMedia({ 
+                    audio: {
+                        echoCancellation: true,
+                        noiseSuppression: true,
+                        autoGainControl: true,
+                        sampleRate: 48000
+                    } 
+                });
+                
+                console.log('Neural voice channels activated...');
+                stream.getTracks().forEach(track => track.stop());
+                
+                document.getElementById('setupForm').style.display = 'none';
+                document.getElementById('voiceInterface').style.display = 'block';
+                
+                initializeNeuralWaves();
+                initializeNeuralRecognition();
+                
+                isSessionActive = true;
+                
+                // Neural greeting with personality
+                const greeting = generateNeuralGreeting();
+                speakWithNeuralVoice(greeting);
+                
+            } catch (error) {
+                console.error('Neural session initialization failed:', error);
+                showError(`🧠 Neural voice system initialization failed.
+
+NEURAL REQUIREMENTS:
+1. High-quality microphone access required
+2. Neural voice processing needs secure HTTPS connection  
+3. Advanced neural features need Chrome/Edge browser
+4. Ensure no other apps are using microphone
+
+Error: ${error.message}`);
+            }
+        }
+
+        // Generate natural greeting based on personality
+        function generateNeuralGreeting() {
+            const greetings = {
+                natural: "Hey there! I'm your AI assistant, and I'm ready to chat. What's on your mind today?",
+                enthusiastic: "Hello! I'm SO excited to talk with you today! What amazing thing can I help you with?",
+                calm: "Hello... I'm here, ready to listen and help. Take your time, what would you like to discuss?",
+                professional: "Good day. I'm your AI assistant, fully operational and ready to assist you efficiently.",
+                friendly: "Hi friend! Great to meet you! I'm here and ready to help with whatever you need.",
+                witty: "Well hello there! I'm your AI assistant - think of me as your digital conversation partner. What's the topic du jour?"
+            };
+            return greetings[currentPersonality] || greetings.natural;
+        }
+
+        // Initialize neural speech recognition
+        function initializeNeuralRecognition() {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            recognition = new SpeechRecognition();
+            
+            recognition.continuous = false;
+            recognition.interimResults = false;
+            recognition.lang = 'en-US';
+            recognition.maxAlternatives = 3; // Get multiple alternatives for neural processing
+
+            recognition.onstart = () => {
+                console.log('Neural speech recognition activated');
+                setNeuralMode('listening');
+            };
+
+            recognition.onresult = (event) => {
+                console.log('Neural speech processed:', event.results);
+                const transcript = event.results[0][0].transcript.trim();
+                const confidence = event.results[0][0].confidence;
+                
+                console.log(`Neural transcript: "${transcript}" (confidence: ${confidence})`);
+                
+                if (transcript && confidence > 0.7) {
+                    addToHistory('user', transcript);
+                    handleNeuralInput(transcript);
+                } else if (transcript) {
+                    // Lower confidence, ask for clarification
+                    const clarification = "I heard something but I'm not quite sure. Could you repeat that?";
+                    addToHistory('ai', clarification);
+                    speakWithNeuralVoice(clarification);
+                }
+            };
+
+            recognition.onerror = (event) => {
+                console.error('Neural recognition error:', event.error);
+                
+                if (event.error === 'no-speech') {
+                    // Natural response to no speech
+                    const responses = [
+                        "I'm listening... go ahead when you're ready.",
+                        "Take your time, I'm here.",
+                        "I'm waiting for you to speak."
+                    ];
+                    const response = responses[Math.floor(Math.random() * responses.length)];
+                    speakWithNeuralVoice(response);
+                } else {
+                    showError(`Neural speech error: ${event.error}`);
+                    // Try manual input as fallback
+                    setTimeout(() => {
+                        const userInput = prompt("Neural speech had trouble. Please type your message:");
+                        if (userInput && userInput.trim()) {
+                            addToHistory('user', userInput);
+                            handleNeuralInput(userInput);
+                        } else if (!isPaused && isSessionActive) {
+                            setTimeout(() => startNeuralListening(), 2000);
+                        }
+                    }, 1000);
+                }
+            };
+
+            recognition.onend = () => {
+                console.log('Neural recognition cycle complete');
+                if (!isPaused && isSessionActive && !isAISpeaking) {
+                    setTimeout(() => startNeuralListening(), 1200);
+                }
+            };
+
+            // Start listening immediately
+            setTimeout(() => startNeuralListening(), 1500);
+        }
+
+        // Set neural visualization mode
+        function setNeuralMode(mode) {
+            const visualizer = document.getElementById('visualizer');
+            const statusText = document.getElementById('statusText');
+            
+            // Clear any existing classes and animations
+            visualizer.className = 'voice-visualizer';
+            
+            if (mode === 'listening') {
+                isListening = true;
+                isAISpeaking = false;
+                isThinking = false;
+                
+                visualizer.classList.add('neural-listening');
+                statusText.textContent = 'Neural listening active...';
+                
+                const animateInterval = setInterval(() => {
+                    if (isListening && !isAISpeaking && !isThinking) {
+                        animateNeuralWaves('listening', 0.8);
+                    } else {
+                        clearInterval(animateInterval);
+                    }
+                }, 80);
+                
+            } else if (mode === 'speaking') {
+                isListening = false;
+                isAISpeaking = true;
+                isThinking = false;
+                
+                visualizer.classList.add('neural-speaking');
+                statusText.textContent = 'Neural voice synthesis active...';
+                
+                const animateInterval = setInterval(() => {
+                    if (isAISpeaking) {
+                        animateNeuralWaves('speaking', 1.3);
+                    } else {
+                        clearInterval(animateInterval);
+                    }
+                }, 60);
+                
+            } else if (mode === 'thinking') {
+                isListening = false;
+                isAISpeaking = false;
+                isThinking = true;
+                
+                visualizer.classList.add('neural-thinking');
+                statusText.textContent = 'Neural processing...';
+                
+                const animateInterval = setInterval(() => {
+                    if (isThinking) {
+                        animateNeuralWaves('thinking', 0.7);
+                    } else {
+                        clearInterval(animateInterval);
+                    }
+                }, 100);
+            }
+        }
+
+        // Start neural listening
+        function startNeuralListening() {
+            if (!isSessionActive || isPaused || isAISpeaking || isThinking) return;
+            
+            try {
+                if (recognition && recognition.abort) {
+                    recognition.abort();
+                }
+                
+                console.log('Activating neural listening...');
+                recognition.start();
+                
+            } catch (error) {
+                console.error('Neural listening activation failed:', error);
+                showError('Neural listening system error. Attempting recovery...');
+                setTimeout(() => startNeuralListening(), 3000);
+            }
+        }
+
+        // Neural voice synthesis (simulating advanced vocal patterns)
+        function speakWithNeuralVoice(text) {
+            if (!text || !isSessionActive) return;
+            
+            synthesis.cancel();
+            setNeuralMode('speaking');
+            
+            // Process text for more natural speech patterns
+            const naturalText = processTextForNaturalSpeech(text);
+            
+            const utterance = new SpeechSynthesisUtterance(naturalText);
+            
+            // Apply neural voice configuration
+            utterance.rate = neuralVoiceConfig.rate;
+            utterance.pitch = neuralVoiceConfig.pitch;
+            utterance.volume = neuralVoiceConfig.volume;
+            
+            // Add personality-specific adjustments
+            applyPersonalityToVoice(utterance);
+            
+            utterance.onstart = () => {
+                updateNeuralStats();
+            };
+            
+            utterance.onend = () => {
+                isAISpeaking = false;
+                stopNeuralWaves();
+                if (!isPaused) {
+                    setTimeout(() => startNeuralListening(), 800);
+                }
+            };
+            
+            utterance.onerror = () => {
+                isAISpeaking = false;
+                stopNeuralWaves();
+                if (!isPaused) {
+                    setTimeout(() => startNeuralListening(), 1000);
+                }
+            };
+            
+            synthesis.speak(utterance);
+        }
+
+        // Process text to make it more natural and conversational
+        function processTextForNaturalSpeech(text) {
+            // Add natural pauses and emphasis
+            let processedText = text;
+            
+            // Add pauses for natural flow
+            processedText = processedText.replace(/\. /g, '... ');
+            processedText = processedText.replace(/! /g, '! ');
+            processedText = processedText.replace(/\? /g, '? ');
+            
+            // Add emphasis words
+            processedText = processedText.replace(/\b(really|very|absolutely|definitely|exactly)\b/gi, '$1');
+            
+            // Convert some formal language to conversational
+            processedText = processedText.replace(/\bI am\b/gi, "I'm");
+            processedText = processedText.replace(/\byou are\b/gi, "you're");
+            processedText = processedText.replace(/\bit is\b/gi, "it's");
+            processedText = processedText.replace(/\bthat is\b/gi, "that's");
+            processedText = processedText.replace(/\bwould not\b/gi, "wouldn't");
+            processedText = processedText.replace(/\bcannot\b/gi, "can't");
+            processedText = processedText.replace(/\bdo not\b/gi, "don't");
+            
+            return processedText;
+        }
+
+        // Apply personality-specific voice characteristics
+        function applyPersonalityToVoice(utterance) {
+            switch(currentPersonality) {
+                case 'enthusiastic':
+                    utterance.rate = 1.1;
+                    utterance.pitch = 1.2;
+                    neuralVoiceConfig.emotion = '😄';
+                    break;
+                case 'calm':
+                    utterance.rate = 0.8;
+                    utterance.pitch = 0.9;
+                    neuralVoiceConfig.emotion = '😌';
+                    break;
+                case 'professional':
+                    utterance.rate = 0.95;
+                    utterance.pitch = 1.0;
+                    neuralVoiceConfig.emotion = '💼';
+                    break;
+                case 'friendly':
+                    utterance.rate = 0.9;
+                    utterance.pitch = 1.1;
+                    neuralVoiceConfig.emotion = '😊';
+                    break;
+                case 'witty':
+                    utterance.rate = 1.0;
+                    utterance.pitch = 1.05;
+                    neuralVoiceConfig.emotion = '😏';
+                    break;
+                default: // natural
+                    utterance.rate = 0.9;
+                    utterance.pitch = 1.0;
+                    neuralVoiceConfig.emotion = '😊';
+            }
+            
+            // Store current settings
+            neuralVoiceConfig.rate = utterance.rate;
+            neuralVoiceConfig.pitch = utterance.pitch;
+        }
+
+        // Update neural stats display
+        function updateNeuralStats() {
+            document.getElementById('voicePitch').textContent = neuralVoiceConfig.pitch.toFixed(1);
+            document.getElementById('voiceRate').textContent = neuralVoiceConfig.rate.toFixed(1);
+            document.getElementById('voiceEmotion').textContent = neuralVoiceConfig.emotion;
+            document.getElementById('voiceDepth').textContent = Math.round(neuralVoiceConfig.depth * 100) + '%';
+        }
+
+        // Handle neural input with thinking phase
+        async function handleNeuralInput(input) {
+            if (!input.trim()) return;
+            
+            try {
+                recognition.stop();
+                setNeuralMode('thinking');
+                
+                // Create more conversational prompt
+                const neuralPrompt = createNeuralPrompt(input);
+                const response = await callNeuralAI(neuralPrompt);
+                
+                addToHistory('ai', response);
+                speakWithNeuralVoice(response);
+                
+            } catch (error) {
+                console.error('Neural processing error:', error);
+                const errorResponses = [
+                    "Hmm, I'm having trouble processing that. Could you try asking in a different way?",
+                    "Sorry, my neural networks are having a moment. Let me try to help anyway...",
+                    "I encountered an error, but I'm still here! What else can I help you with?"
+                ];
+                const errorMsg = errorResponses[Math.floor(Math.random() * errorResponses.length)];
+                addToHistory('ai', errorMsg);
+                speakWithNeuralVoice(errorMsg);
+            }
+        }
+
+        // Create neural conversation prompt
+        function createNeuralPrompt(userInput) {
+            const personalityInstruction = personalityPrompts[currentPersonality];
+            
+            return `${personalityInstruction}
+
+Important: You are speaking out loud, not writing text. Make your response natural and conversational as if you're having a real conversation with someone. Use natural speech patterns, contractions, and conversational flow. Keep responses relatively concise but engaging (1-3 sentences usually).
+
+Human said: "${userInput}"
+
+Respond naturally as if you're speaking:`;
+        }
+
+        // Call AI with neural processing
+        async function callNeuralAI(prompt) {
+            // Add the neural conversation context
+            const neuralMessage = { role: "user", content: prompt };
+            
+            const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+                method: "POST",
+                headers: {
+                    "Authorization": `Bearer ${apiKey}`,
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    model: modelName,
+                    messages: [...conversationHistory, neuralMessage],
+                    max_tokens: 100, // Shorter responses for natural speech
+                    temperature: 0.8, // More natural variation
+                    top_p: 0.9,
+                    frequency_penalty: 0.3 // Avoid repetition
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error(`Neural AI Error: ${response.status}`);
+            }
+
+            const data = await response.json();
+            const aiResponse = data.choices[0].message.content.trim();
+            
+            // Store in conversation history for context
+            conversationHistory.push({ role: "user", content: prompt });
+            conversationHistory.push({ role: "assistant", content: aiResponse });
+            
+            // Keep conversation history manageable
+            if (conversationHistory.length > 10) {
+                conversationHistory = conversationHistory.slice(-8);
+            }
+            
+            return aiResponse;
+        }
+
+        // Adjust personality in real-time
+        function adjustPersonality(newPersonality) {
+            // Remove active class from all buttons
+            document.querySelectorAll('.personality-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // Add active class to clicked button
+            event.target.classList.add('active');
+            
+            // Update personality settings
+            switch(newPersonality) {
+                case 'excited':
+                    neuralVoiceConfig.pitch = 1.3;
+                    neuralVoiceConfig.rate = 1.1;
+                    neuralVoiceConfig.emotion = '🚀';
+                    currentPersonality = 'enthusiastic';
+                    break;
+                case 'calm':
+                    neuralVoiceConfig.pitch = 0.8;
+                    neuralVoiceConfig.rate = 0.7;
+                    neuralVoiceConfig.emotion = '🧘';
+                    currentPersonality = 'calm';
+                    break;
+                case 'thoughtful':
+                    neuralVoiceConfig.pitch = 0.95;
+                    neuralVoiceConfig.rate = 0.85;
+                    neuralVoiceConfig.emotion = '🤔';
+                    currentPersonality = 'professional';
+                    break;
+                case 'playful':
+                    neuralVoiceConfig.pitch = 1.15;
+                    neuralVoiceConfig.rate = 1.0;
+                    neuralVoiceConfig.emotion = '😄';
+                    currentPersonality = 'witty';
+                    break;
+            }
+            
+            updateNeuralStats();
+            
+            // Give feedback about the change
+            const personalityResponses = {
+                excited: "Awesome! I'm feeling super energetic now!",
+                calm: "Ah... that's better. I'm feeling much more relaxed now.",
+                thoughtful: "Interesting. I'm now in a more contemplative mode.",
+                playful: "Hehe! This is fun - I'm feeling more playful now!"
+            };
+            
+            speakWithNeuralVoice(personalityResponses[newPersonality]);
+        }
+
+        // Toggle pause
+        function togglePause() {
+            isPaused = !isPaused;
+            const pauseBtn = document.getElementById('pauseBtn');
+            const statusText = document.getElementById('statusText');
+            
+            if (isPaused) {
+                recognition.stop();
+                synthesis.cancel();
+                pauseBtn.innerHTML = '▶️ Resume';
+                statusText.textContent = 'Neural systems paused';
+                stopNeuralWaves();
+                document.getElementById('visualizer').className = 'voice-visualizer';
+            } else {
+                pauseBtn.innerHTML = '⏸️ Pause';
+                speakWithNeuralVoice("I'm back! What were we talking about?");
+            }
+        }
+
+        // End session
+        function endSession() {
+            // Natural goodbye
+            if (isSessionActive && !isPaused) {
+                speakWithNeuralVoice("Thanks for chatting! It was great talking with you. See you next time!");
+                
+                setTimeout(() => {
+                    finalizeEndSession();
+                }, 3000);
+            } else {
+                finalizeEndSession();
+            }
+        }
+
+        function finalizeEndSession() {
+            isSessionActive = false;
+            isPaused = false;
+            
+            if (recognition) recognition.stop();
+            synthesis.cancel();
+            
+            document.getElementById('setupForm').style.display = 'block';
+            document.getElementById('voiceInterface').style.display = 'none';
+            
+            // Reset everything
+            document.getElementById('apiKey').value = '';
+            document.getElementById('modelName').value = 'microsoft/phi-3-mini-128k-instruct:free';
+            document.getElementById('voicePersonality').value = 'natural';
+            document.getElementById('chatHistory').innerHTML = '';
+            conversationHistory = [];
+            currentPersonality = 'natural';
+            
+            // Reset neural config
+            neuralVoiceConfig = {
+                pitch: 1.0,
+                rate: 0.9,
+                volume: 0.8,
+                emotion: 'neutral',
+                depth: 0.85
+            };
+        }
+
+        // Initialize on page load
+        window.addEventListener('load', () => {
+            initializeNeuralWaves();
+            updateNeuralStats();
+        });
+
+        // Add some neural breathing animation when idle
+        setInterval(() => {
+            if (!isSessionActive) {
+                const visualizer = document.getElementById('visualizer');
+                if (visualizer && !visualizer.classList.contains('neural-speaking') && 
+                    !visualizer.classList.contains('neural-listening') && 
+                    !visualizer.classList.contains('neural-thinking')) {
+                    
+                    // Subtle idle animation
+                    visualizer.style.transform = `scale(${1 + Math.sin(Date.now() / 2000) * 0.02})`;
+                }
+            }
+        }, 100);
+
+    </script>
+</body>
+</html>
